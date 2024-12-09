@@ -2,59 +2,65 @@ function savePasswords(passwords) {
     localStorage.setItem('passwords', JSON.stringify(passwords));
 }
 
-// Função para carregar as senhas do localStorage
 function loadPasswords() {
     const storedPasswords = localStorage.getItem('passwords');
     return storedPasswords ? JSON.parse(storedPasswords) : [];
 }
 
-// Função para adicionar uma nova senha
 function addPassword(event) {
     event.preventDefault();
 
-    const siteName = document.getElementById('SiteName').value;
-    const siteUrl = document.getElementById('SiteUrl').value;
-    const email = document.getElementById('Email').value;
-    const password = document.getElementById('Password').value;
+    const form = document.getElementById('addPasswordForm');
 
-    const passwords = loadPasswords();
-    const newPassword = { siteName, siteUrl, email, password };
-    passwords.push(newPassword);
+    if (form.checkValidity()) {
+        const siteName = document.getElementById('SiteName').value;
+        const siteUrl = document.getElementById('SiteUrl').value;
+        const email = document.getElementById('Email').value;
+        const password = document.getElementById('Password').value;
 
-    savePasswords(passwords);
-    displayPasswords();
-    document.getElementById('addPasswordForm').reset();
-    $('#AddPass').modal('hide');
+        const passwords = loadPasswords();
+        const newPassword = { siteName, siteUrl, email, password };
+        passwords.push(newPassword);
+
+        savePasswords(passwords);
+        displayPasswords();
+        $('#AddPass').modal('hide');
+        document.getElementById('addPasswordForm').reset();
+    }
 }
 
-// Função para editar uma senha
 function editPassword(event) {
     event.preventDefault();
 
-    const siteName = document.getElementById('editSiteName').value;
-    const siteUrl = document.getElementById('editSiteUrl').value;
-    const email = document.getElementById('editEmail').value;
-    const password = document.getElementById('editPassword').value;
-    const passwordId = document.getElementById('editPasswordId').value;
+    const form = document.getElementById('editPasswordForm');
 
-    const passwords = loadPasswords();
-    passwords[passwordId] = { siteName, siteUrl, email, password };
+    if (form.checkValidity()) {
+        var siteName = document.getElementById('editSiteName').value;
+        var siteUrl = document.getElementById('editSiteUrl').value;
+        var email = document.getElementById('editEmail').value;
+        var password = document.getElementById('editPassword').value;
+        var passwordId = parseInt(document.getElementById('editPasswordId').value);
 
-    savePasswords(passwords);
-    displayPasswords();
-    document.getElementById('editPasswordForm').reset();
-    $('#DetailsPass').modal('hide');
+        var passwords = loadPasswords();
+
+        passwords[passwordId] = { siteName, siteUrl, email, password };
+        savePasswords(passwords);
+
+        displayPasswords();
+        $('#DetailsPass').modal('hide');
+        document.getElementById('editPasswordForm').reset();
+    }
 }
 
-// Função para deletar uma senha
 function deletePassword(id) {
-    const passwords = loadPasswords();
-    passwords.splice(id, 1);
-    savePasswords(passwords);
-    displayPasswords();
+    if (confirm("Tem a certeza que deseja apagar esta palavra-passe?")) {
+        const passwords = loadPasswords();
+        passwords.splice(id, 1);
+        savePasswords(passwords);
+        displayPasswords();
+    }
 }
 
-// Função para preencher a lista de senhas
 function displayPasswords() {
     const passwords = loadPasswords();
     const passwordList = document.getElementById('passwordList');
@@ -63,6 +69,7 @@ function displayPasswords() {
     passwords.forEach((password, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td>${index + 1}</td>
             <td>${password.siteName}</td>
             <td>${password.siteUrl}</td>
             <td>${password.email}</td>
@@ -78,22 +85,38 @@ function displayPasswords() {
     });
 }
 
-// Função para carregar os dados da senha no modal de edição
 function loadEditForm(index) {
     const passwords = loadPasswords();
     const password = passwords[index];
 
+    document.getElementById('editPasswordId').value = index;
     document.getElementById('editSiteName').value = password.siteName;
     document.getElementById('editSiteUrl').value = password.siteUrl;
     document.getElementById('editEmail').value = password.email;
     document.getElementById('editPassword').value = password.password;
-    document.getElementById('editPasswordId').value = index;
+    document.getElementById('editPasswordForm').addEventListener('submit', editPassword);
 }
 
-// Adiciona evento de submit para o formulário de adicionar senha
+function generatePassword() {
+    const randomPassword = Array(16)
+        .fill(0)
+        .map(() => Math.random().toString(36).charAt(2))
+        .join('');
+
+    document.getElementById('Password').value = randomPassword;
+}
+
+function generateEditPassword() {
+    const randomPassword = Array(16)
+        .fill(0)
+        .map(() => Math.random().toString(36).charAt(2))
+        .join('');
+
+    document.getElementById('editPassword').value = randomPassword;
+}
+
 document.getElementById('addPasswordForm').addEventListener('submit', addPassword);
 
-// Inicializa a lista de senhas quando a página é carregada
 window.onload = function () {
     displayPasswords();
 }
