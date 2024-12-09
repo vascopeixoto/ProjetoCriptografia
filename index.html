@@ -24,75 +24,10 @@
                         <th>Site</th>
                         <th>URL</th>
                         <th>Email</th>
-                        <th></th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>exemplo1</td>
-                        <td>www.exemplo1.com</td>
-                        <td>contato@exemplo1.com</td>
-                        <td>
-                            <div style="display: flex; gap: 0.3rem;">
-                                <i class='bx bx-detail' style="font-size: 1.5rem; cursor: pointer;"
-                                    data-bs-toggle="modal" data-bs-target="#DetailsPass"></i>
-                                <i class='bx bx-trash' style="font-size: 1.5rem; cursor: pointer;"
-                                    onclick="confirm()"></i>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>sitefalso</td>
-                        <td>www.sitefalso.com</td>
-                        <td>admin@sitefalso.com</td>
-                        <td>
-                            <div style="display: flex; gap: 0.3rem;">
-                                <i class='bx bx-detail' style="font-size: 1.5rem; cursor: pointer;"
-                                    data-bs-toggle="modal" data-bs-target="#DetailsPass"></i>
-                                <i class='bx bx-trash' style="font-size: 1.5rem; cursor: pointer;"
-                                    onclick="confirm()"></i>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>portalteste</td>
-                        <td>www.portalteste.net</td>
-                        <td>suporte@portalteste.net</td>
-                        <td>
-                            <div style="display: flex; gap: 0.3rem;">
-                                <i class='bx bx-detail' style="font-size: 1.5rem; cursor: pointer;"
-                                    data-bs-toggle="modal" data-bs-target="#DetailsPass"></i>
-                                <i class='bx bx-trash' style="font-size: 1.5rem; cursor: pointer;"
-                                    onclick="confirm()"></i>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>novosite</td>
-                        <td>www.novosite.org</td>
-                        <td>info@novosite.org</td>
-                        <td>
-                            <div style="display: flex; gap: 0.3rem;">
-                                <i class='bx bx-detail' style="font-size: 1.5rem; cursor: pointer;"
-                                    data-bs-toggle="modal" data-bs-target="#DetailsPass"></i>
-                                <i class='bx bx-trash' style="font-size: 1.5rem; cursor: pointer;"
-                                    onclick="confirm()"></i>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>dominioxyz</td>
-                        <td>www.dominioxyz.com.br</td>
-                        <td>contato@dominioxyz.com.br</td>
-                        <td>
-                            <div style="display: flex; gap: 0.3rem;">
-                                <i class='bx bx-detail' style="font-size: 1.5rem; cursor: pointer;"
-                                    data-bs-toggle="modal" data-bs-target="#DetailsPass"></i>
-                                <i class='bx bx-trash' style="font-size: 1.5rem; cursor: pointer;"
-                                    onclick="confirm()"></i>
-                            </div>
-                        </td>
-                    </tr>
+                <tbody id="passwordList">
                 </tbody>
             </table>
         </div>
@@ -108,11 +43,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="#"
+                    <form id="addPasswordForm"
                         style="display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem;">
                         <div style="display: flex; flex-direction: column;">
                             <label for="SiteName" class="form-label">Site Name</label>
-                            <input type="email" required class="formInput" id="SiteName" placeholder="Example">
+                            <input type="text" required class="formInput" id="SiteName" placeholder="Example">
                         </div>
                         <div style="display: flex; flex-direction: column;">
                             <label for="SiteUrl" class="form-label">Site Url</label>
@@ -152,7 +87,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="#"
+                    <form id="editPasswordForm"
                         style="display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem;">
                         <div style="display: flex; flex-direction: column;">
                             <label for="SiteName" class="form-label">Site Name</label>
@@ -189,6 +124,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
+
+    <script src="core.js"></script>
 </body>
 
 </html>
