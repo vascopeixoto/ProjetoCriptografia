@@ -1,14 +1,15 @@
-let publicKey, privateKey, aesKey;
-
+//Declarar as chaves
+let publicKey, privateKey, secretKey;
 
 //#region Declare a publicKey, privateKey to use the RSA
-async function generateKeyPair() {
+
+async function generateAsyncKeys() {
     // Verificar se as chaves já existem no localStorage
     const publicKeyStored = localStorage.getItem("publicKey");
     const privateKeyStored = localStorage.getItem("privateKey");
 
     if (publicKeyStored && privateKeyStored) {
-        // Recuperar chaves existentes do localStorage
+        // Recuperar as chaves do localStorage
         publicKey = await crypto.subtle.importKey(
             "spki",
             base64ToArrayBuffer(publicKeyStored),
@@ -23,9 +24,8 @@ async function generateKeyPair() {
             true,
             ["decrypt"]
         );
-        console.log("RSA keys recovered from localStorage");
     } else {
-        // Gerar novas chaves se não existirem
+        // Gerar novas as novas chaves
         const keyPair = await crypto.subtle.generateKey(
             {
                 name: "RSA-OAEP",
@@ -39,29 +39,25 @@ async function generateKeyPair() {
         publicKey = keyPair.publicKey;
         privateKey = keyPair.privateKey;
 
-        // Salvar chaves no localStorage
+        // Guardar as chaves no localStorage
         const publicKeyBase64 = arrayBufferToBase64(await crypto.subtle.exportKey("spki", publicKey));
         const privateKeyBase64 = arrayBufferToBase64(await crypto.subtle.exportKey("pkcs8", privateKey));
 
         localStorage.setItem("publicKey", publicKeyBase64);
         localStorage.setItem("privateKey", privateKeyBase64);
-
-        console.log("RSA keys generated and stored in localStorage");
     }
-
-    console.log("Public Key:", publicKey);
-    console.log("Private Key:", privateKey);
 }
 
 //#endregion
 
 //#region Declare a secretKey to use the AES
-async function initializeAESKey() {
-    try {
-        console.log("Generating AES Key...");
-        const keyData = crypto.getRandomValues(new Uint8Array(32)); // 256 bits
 
-        aesKey = await crypto.subtle.importKey(
+async function initializesecretKey() {
+    try {
+        //Gerar chave secreta
+        const keyData = crypto.getRandomValues(new Uint8Array(32));
+
+        secretKey = await crypto.subtle.importKey(
             "raw",
             keyData,
             { name: "AES-GCM" },
@@ -69,59 +65,54 @@ async function initializeAESKey() {
             ["encrypt", "decrypt"]
         );
 
-        console.log("AES Key successfully generated:", keyData);
-
-        const encryptedAESKey = await crypto.subtle.encrypt(
+        // Criptografar chave secreta com a chave publica
+        const encryptedsecretKey = await crypto.subtle.encrypt(
             { name: "RSA-OAEP" },
             publicKey,
             keyData
         );
 
-        console.log("AES Key encrypted with RSA public key:", encryptedAESKey);
+        // Guardar a chave secreta no localStorage
+        const encryptedsecretKeyBase64 = arrayBufferToBase64(encryptedsecretKey);
+        localStorage.setItem("encryptedsecretKey", encryptedsecretKeyBase64);
 
-        // Armazena a chave criptografada no localStorage
-        const encryptedAESKeyBase64 = arrayBufferToBase64(encryptedAESKey);
-        localStorage.setItem("encryptedAESKey", encryptedAESKeyBase64);
-
-        console.log("Encrypted AES Key stored in localStorage.");
     } catch (error) {
         console.error("Error during AES Key initialization:", error);
+        throw error;
     }
 }
 
-async function recoverAESKey() {
-    const encryptedAESKeyBase64 = localStorage.getItem("encryptedAESKey");
+async function recoversecretKey() {
 
-    if (!encryptedAESKeyBase64) {
+    // Recuperar chave secreta do local storage
+    const encryptedsecretKeyBase64 = localStorage.getItem("encryptedsecretKey");
+
+    if (!encryptedsecretKeyBase64) {
         throw new Error("Encrypted AES Key not found!");
     }
 
-    console.log("Encrypted AES Key (Base64):", encryptedAESKeyBase64);
-
     // Converter de Base64 para ArrayBuffer
-    const encryptedAESKey = base64ToArrayBuffer(encryptedAESKeyBase64);
-    console.log("Encrypted AES Key (ArrayBuffer):", encryptedAESKey);
+    const encryptedsecretKey = base64ToArrayBuffer(encryptedsecretKeyBase64);
 
-    // Descriptografar
     try {
-        const decryptedAESKey = await crypto.subtle.decrypt(
+        // Descriptografar a chave com a chave privada
+        const decryptedsecretKey = await crypto.subtle.decrypt(
             { name: "RSA-OAEP" },
             privateKey,
-            encryptedAESKey
+            encryptedsecretKey
         );
 
-        aesKey = await crypto.subtle.importKey(
+        secretKey = await crypto.subtle.importKey(
             "raw",
-            decryptedAESKey,
+            decryptedsecretKey,
             { name: "AES-GCM" },
             false,
             ["encrypt", "decrypt"]
         );
 
-        console.log("AES key recovered successfully: ", aesKey);
     } catch (error) {
         console.error("Failed to decrypt AES Key:", error);
-        throw error; // Repassa o erro
+        throw error;
     }
 }
 
@@ -130,6 +121,8 @@ async function recoverAESKey() {
 
 //#region Encrypt and Decrypt Methods
 async function encryptPassword(password, key) {
+
+    //Gerar uma hash e criptografar a pass com a chave secreta
     const encoder = new TextEncoder();
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encryptedData = await crypto.subtle.encrypt(
@@ -141,6 +134,7 @@ async function encryptPassword(password, key) {
 }
 
 async function decryptPassword(encryptedPassword, iv, key) {
+    //Descriptografar a pass com a chave secreta
     const decoder = new TextDecoder();
     const decryptedData = await crypto.subtle.decrypt(
         { name: "AES-GCM", iv },
@@ -175,16 +169,19 @@ async function addPassword(event) {
 
     const form = document.getElementById('addPasswordForm');
 
+    //Valida se o form está valido e recupera os valores do mesmo
     if (form.checkValidity()) {
         const siteName = document.getElementById('SiteName').value;
         const siteUrl = document.getElementById('SiteUrl').value;
         const email = document.getElementById('Email').value;
         const password = document.getElementById('Password').value;
-        const { encryptedPassword, iv } = await encryptPassword(password, aesKey);
+
+        //Criptografa a pass e guarda a pass e o hash usado na encriptacao
+        const { encryptedPassword, iv } = await encryptPassword(password, secretKey);
         const passwords = loadPasswords();
+        //Guarda todos os dados da pass no localstorage e lista novamente as pass
         const newPassword = { siteName, siteUrl, email, encryptedPassword: arrayBufferToBase64(encryptedPassword), iv: arrayBufferToBase64(iv) };
         passwords.push(newPassword);
-
         savePasswords(passwords);
         ListPasswords();
         $('#AddPass').modal('hide');
@@ -197,18 +194,21 @@ async function editPassword(event) {
 
     const form = document.getElementById('editPasswordForm');
 
+    //Valida se o form está valido e recupera os valores do mesmo
     if (form.checkValidity()) {
         var siteName = document.getElementById('editSiteName').value;
         var siteUrl = document.getElementById('editSiteUrl').value;
         var email = document.getElementById('editEmail').value;
         var password = document.getElementById('editPassword').value;
         var passwordId = parseInt(document.getElementById('editPasswordId').value);
-        const { encryptedPassword, iv } = await encryptPassword(password, aesKey);
 
+        //Criptografa a pass e guarda a pass e o hash usado na encriptacao
+        const { encryptedPassword, iv } = await encryptPassword(password, secretKey);
         var passwords = loadPasswords();
+
+        //Substitui todos os dados da pass no localstorage e lista novamente as pass
         passwords[passwordId] = { siteName, siteUrl, email, encryptedPassword: arrayBufferToBase64(encryptedPassword), iv: arrayBufferToBase64(iv) };
         savePasswords(passwords);
-
         ListPasswords();
         $('#DetailsPass').modal('hide');
         document.getElementById('editPasswordForm').reset();
@@ -216,6 +216,7 @@ async function editPassword(event) {
 }
 
 function deletePassword(id) {
+    // Mostra uma confirmação apaga a pass e lista novamente as pass
     if (confirm("Tem a certeza que deseja apagar esta palavra-passe?")) {
         const passwords = loadPasswords();
         passwords.splice(id, 1);
@@ -225,10 +226,13 @@ function deletePassword(id) {
 }
 
 function ListPasswords() {
+
+    //vai buscar as pass ao localstorage
     const passwords = loadPasswords();
     const passwordList = document.getElementById('passwordList');
     passwordList.innerHTML = '';
 
+    // Adiciona as novas colunas com a informacao das pass na tabela
     passwords.forEach((password, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -251,10 +255,12 @@ function ListPasswords() {
 
 //#region Utilities
 function savePasswords(passwords) {
+    //guarda as pass como json no local storage
     localStorage.setItem('passwords', JSON.stringify(passwords));
 }
 
 function loadPasswords() {
+    //Recupera as pass e devolve
     const storedPasswords = localStorage.getItem('passwords');
     return storedPasswords ? JSON.parse(storedPasswords) : [];
 }
@@ -262,6 +268,7 @@ function loadPasswords() {
 
 //#region Generate Password
 async function generatePassword() {
+    // Gera um hash e preenche o input da password
     const randomPassword = Array(16)
         .fill(0)
         .map(() => Math.random().toString(36).charAt(2))
@@ -271,6 +278,7 @@ async function generatePassword() {
 }
 
 async function generateEditPassword() {
+    // Gera um hash e preenche o input da password
     const randomPassword = Array(16)
         .fill(0)
         .map(() => Math.random().toString(36).charAt(2))
@@ -282,10 +290,12 @@ async function generateEditPassword() {
 
 //#region PopulateEditModal
 function loadEditForm(index) {
+    // vai buscar a pass e preenche o formulario
     const passwords = loadPasswords();
     const passwordObj = passwords[index];
 
-    if (!aesKey) {
+    //verifica se a chave secreta existe
+    if (!secretKey) {
         console.error("AES Key is not ready!");
         return;
     }
@@ -294,10 +304,12 @@ function loadEditForm(index) {
     document.getElementById('editSiteName').value = passwordObj.siteName;
     document.getElementById('editSiteUrl').value = passwordObj.siteUrl;
     document.getElementById('editEmail').value = passwordObj.email;
+
+    // descriptografa a pass para mostrar a pass correta
     decryptPassword(
         base64ToArrayBuffer(passwordObj.encryptedPassword),
         base64ToArrayBuffer(passwordObj.iv),
-        aesKey
+        secretKey
     ).then((password) => {
         document.getElementById('editPassword').value = password;
     });
@@ -305,29 +317,22 @@ function loadEditForm(index) {
 }
 //#endregion 
 
-
 async function main() {
+    //gera as chaves privadas e publicas, verifica se existe chave secreta, senao existir tambem gera uma chave secreta
     try {
-        console.log("Generating RSA key pair...");
-        await generateKeyPair();
+        await generateAsyncKeys();
 
-        console.log("Checking for existing AES key...");
-        if (localStorage.getItem("encryptedAESKey")) {
-            console.log("Encrypted AES Key found. Recovering...");
-            await recoverAESKey();
+        if (localStorage.getItem("encryptedsecretKey")) {
+            await recoversecretKey();
         } else {
-            console.log("No AES Key found. Initializing...");
-            await initializeAESKey();
+            await initializesecretKey();
         }
-
-        console.log("Initialization complete.", aesKey);
     } catch (error) {
         console.error("Error during initialization:", error);
     }
 }
 
-
-
+// inicia as chaves e mostra as passwords
 window.onload = async function () {
     await main();
     ListPasswords();
